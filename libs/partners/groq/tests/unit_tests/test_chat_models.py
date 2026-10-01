@@ -22,6 +22,7 @@ from langchain_core.messages import (
 from langchain_core.runnables import RunnableBinding, RunnableSequence
 from pydantic import BaseModel
 
+from langchain_groq._compat import _convert_from_v1_to_groq
 from langchain_groq.chat_models import (
     ChatGroq,
     GroqContextOverflowError,
@@ -1330,3 +1331,22 @@ def test_with_structured_output_documents_method_once() -> None:
     assert doc is not None
     assert doc.count("method:") == 1
     assert "json_schema" in doc
+
+
+def test_convert_from_v1_to_groq_filters_invalid_tool_call() -> None:
+    """`invalid_tool_call` blocks are metadata, not provider content."""
+    blocks: list[Any] = [
+        {"type": "text", "text": "hello"},
+        {
+            "type": "invalid_tool_call",
+            "id": "call_1",
+            "name": "get_weather",
+            "args": "{bad json",
+            "error": "Malformed args.",
+        },
+    ]
+
+    content, additional_kwargs = _convert_from_v1_to_groq(blocks, "groq")
+
+    assert content == "hello"
+    assert additional_kwargs == {}

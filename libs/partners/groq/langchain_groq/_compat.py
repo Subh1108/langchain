@@ -46,7 +46,9 @@ def _convert_from_v1_to_groq(
                 if "executed_tools" not in new_additional_kwargs:
                     new_additional_kwargs["executed_tools"] = []
                 new_additional_kwargs["executed_tools"].append(new_block)
-        elif block["type"] == "server_tool_result":
+        elif block["type"] in ("server_tool_result", "invalid_tool_call"):
+            # `invalid_tool_call` blocks are diagnostic metadata that live on
+            # `AIMessage.invalid_tool_calls`; providers reject them as content.
             continue
 
         elif (
